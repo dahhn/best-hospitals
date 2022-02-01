@@ -1,9 +1,8 @@
 rankall <- function(outcome, num = "best") {
   require("tidyverse")
+  library(data.table)
   `%notin%` <- Negate(`%in%`)
   outcome <- toupper(outcome)
-  if(outcome %notin% colnames(oc)) {stop("invalid outcome")}   ## validate outcome
-  
   ## Read outcome data to OC, name columns, change char to numeric
   oc <- read.csv("outcome-of-care-measures.csv") %>%
     select(., Hospital.Name, State, starts_with("Hospital.30.Day.Death"))
@@ -11,44 +10,17 @@ rankall <- function(outcome, num = "best") {
   oc[oc == "Not Available"] <- NA
   oc[,3:5] <- oc[,3:5] %>% mutate_if(is.character,as.numeric)
   
-  #################### Function for for returning a given rank for every state
-  ranker <- function(outcome, n = "best"){
-    #filter by outcome
-    filtered <- na.omit(oc) %>%
-      #select(., HOSPITAL, STATE, {{outcome}})
-      select(., HOSPITAL, STATE, `HEART ATTACK`) # in return val, remove outcome
-    #search for rank by state
-    returnDF <- filtered[order(filtered[3],filtered[1]), ] %>% group_by(STATE) 
-  head(returnDF)
+  ## validate outcome
+  if(outcome %notin% colnames(oc)) {stop("invalid outcome")}
   
-    
-    }
-  
-  
-  
-  
-  ####################
   ## Create dataframe to analyze based on state
-  filtered <- na.omit(oc) %>%
-    select(., HOSPITAL, STATE, {{outcome}})
-  returnDF <- filtered[order(filtered[3],filtered[1]), ]
-  
- 
-  
-  
-   ## validate 'n' argument and assign value if a character
-  if(is.character(n) == TRUE){
-    n <- toupper(n)
-    if(n == "BEST"){returnDF <- slice(which.min({{outcome}}))}
-    else if(n == "WORST"){returnDF <- slice(which.max({{outcome}}))}
-  }
-  # Return hospital name in that state with the given rank 30-day death rate
-  returnDF
-  ## Read outcome data
-  ## Check that state and outcome are valid
-  ## For each state, find the hospital of the given rank
-  ## Return a data frame with the hospital names and the
-  ## (abbreviated) state name
+  filtered <- na.omit(oc) %>% 
+    select(., HOSPITAL, STATE, `HEART ATTACK`, `HEART FAILURE`, PNEUMONIA) %>% 
+    group_by(`STATE`)
+  if(outcome == "HEART ATTACK"){arrange(filtered, `HEART ATTACK`, .by_group = T)}
+  else if(outcome == "HEART FAILURE"){arrange(filtered, `HEART FAILURE`,.by_group = T)}
+  else if(outcome == "PNEUMONIA"){arrange(filtered, PNEUMONIA,.by_group = T)}
 }
-head(rankall("heart attack",1))
-head(rankall("heart attack","worst"))
+rankall("heart attack",1)
+rankall("heart failure","worst")
+rankall("pneumonia", "worst")
