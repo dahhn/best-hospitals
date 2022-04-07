@@ -1,2 +1,3 @@
 # best-hospitals
-This is part of the coursera data science course by John Hopkins University 
+This is a script to help find the best hospitals based on treatment outcomes.
+
